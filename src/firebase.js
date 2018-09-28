@@ -1,16 +1,15 @@
 import * as firebase from 'firebase';
 import 'firebase/firestore';
 
-if (process.env.NODE_ENV !== 'production') require('../secrets')
-
 var config = {
-  apiKey: process.env.FIREBASE_API_KEY,
+  apiKey: 'AIzaSyBkAi8JlAuOEfCqFjBxOvVeXi83OwOvzoQ',
   authDomain: 'jamspace-01.firebaseapp.com',
   databaseURL: 'https://jamspace-01.firebaseio.com',
   projectId: 'jamspace-01',
   storageBucket: 'jamspace-01.appspot.com',
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID
+  messagingSenderId: '1073650211164'
 };
+
 const settings = { timestampsInSnapshots: true };
 firebase.initializeApp(config);
 const db = firebase.firestore();
