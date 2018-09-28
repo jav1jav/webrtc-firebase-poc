@@ -1,19 +1,37 @@
 import React, { Component } from 'react';
-import db from 'firebase'
+import db from './firebase';
+
+/*
+https://firebase.google.com/docs/firestore/manage-data/add-data?authuser=0
+*/
+
 
 console.log('database', db)
 class JamSpace extends Component {
 
   async addData () {
 
-    const val = await db.collection('javier_test').get()
+    // Updating a user (will create if user not found)
+    await db.collection('users').doc('IXoH1OWTc6gfFBGCWzWs').update({
+      firstName: 'Test',
+      lastName: 'User'
+    })
 
-    // val.get().then((x) => console.log('gotten data (snapshot)', x))
-    //ref('/javier_test/tvGimtHhnKNxtyv0r7uK').once('value')
+    // Easier add
+    // await db.collection('users').add({
+    //   firstName: 'Jack',
+    //   lastName: 'Lye'
+    // });
+
+    //delete a user
+    db.collection("users").doc("userId").delete()
+
     console.log('value of collection.get()', val)
     console.log('isarray? value of collection.get()', Array.isArray(val))
 
 
+    //Getting values (users in this case)
+    const val = await db.collection('users').get()
     val.forEach(el => console.log('elements of val', el.data(), el.id))
   }
 
