@@ -1,14 +1,17 @@
 import React, { Component } from 'react';
 import db from './firebase';
 
-const myId =
+const OFFER = 'offer'
+const ICE = 'ice'
+
 
 class StreamTest extends Component {
   constructor() {
     super()
     this.state = {
-      myId: '',
-      pc: {}
+      streamId: '',
+      pc: {},
+      ice: {}
     }
     this.sendMessage = this.sendMessage.bind(this);
     this.readMessage = this.readMessage.bind(this);
@@ -16,29 +19,41 @@ class StreamTest extends Component {
     this.showFriendsFace = this.showFriendsFace.bind(this);
   }
 
-  componentDidMount() {
-    this.setState({myId: Math.floor(Math.random() * 1000000000)})
+  // ********************************************
+  // * Helper Funcs: read from/ write to firebase
+  // ********************************************
 
-    const friendsVideo = document.getElementById('friendsVideo');
-
-    pc.onicecandidate = event =>
-      event.candidate
-        ? this.sendMessage(myId, JSON.stringify({ ice: event.candidate }))
-        : console.log('Sent All Ice');
-    pc.onaddstream = event => (friendsVideo.srcObject = event.stream);
-
-    db.collection('users')
-      .doc('dan')
-      .onSnapshot(doc => {
-        console.log('Current data: ', doc.data().message);
-        this.readMessage(doc);
-      });
+  writeToFirebase(streamId, field, value) {
+    let msg;
+    switch (field) {
+      case 'string1':{
+        return db.collection('users').doc(streamId).set({string1: value});
+      }
+      default: {
+        console.log('default switch for writeToFirebase')
+      }
+    }
+    // msg.remove();
   }
+  readFromFirebase(streamId, field) {
+    const document = db.collection('users').doc(streamId)
+    let msg;
+    switch (field) {
+      case 'string1':{
+        return JSON.parse(document.data().string1);
+      }
+      default: {
+        console.log('default switch for writeToFirebase')
+      }
+    }
+  }
+
 
   // ********************************************
   // 3. Create a PeerConnection on your computer
+  // 9. Generate Ice Candidates on your computer
   // ********************************************
-  createLocalPeerConnection() {
+  createLocalPeerConnectionWithIceCandidates() {
     const servers = {
       iceServers: [
         { urls: 'stun:stun.services.mozilla.com' },
@@ -50,7 +65,9 @@ class StreamTest extends Component {
         }
       ]
     };
-    this.pc = new RTCPeerConnection(servers);
+    this.setState({
+      pc: new RTCPeerConnection(servers)
+    });
   }
 
   //{/* 4. friend needs to create their own peer connection */}
@@ -70,27 +87,36 @@ class StreamTest extends Component {
   // 7. Send that Offer to your friend’s computer
   // ********************************************
   sendOffer() {
-    this.sendMessage(myId, JSON.stringify({'sdp': this.pc.localDescription}))
+    this.writeToFirebase(this.sessionId, OFFER, JSON.stringify({'sdp': this.pc.localDescription}))
   }
-   // this.sendMessage('sendOfferFrom' + myId, myId, JSON.stringify({ sdp: pc.localDescription }))
+
 
 
   //{/* 8. friend needs to add offer to their peer connection */}
 
   // ********************************************
-  // 9. Generate ICE Candidates on your computer
+  // 9. Add friend's ICE Candidates on your computer
   // ********************************************
-  generateIceCandidates() {
+  addFriendsIceCandidates(msg) {
     this.pc.addIceCandidate(new RTCIceCandidate(msg.ice))
   }
+
+
 
   // ********************************************
   // 10. Send those ICE Candidates to your friend’s computer
   // ********************************************
-  pc.onicecandidate = event =>
-      event.candidate
-        ? this.sendMessage(myId, JSON.stringify({ ice: event.candidate }))
-        : console.log('Sent All Ice');
+  // sendIceCandidatesToFriend() {
+  //   this.pc.onicecandidate = event =>
+  //   event.candidate
+  //     ? this.writeToFirebase(sessionId, ICE, JSON.stringify({ ice: event.candidate }))
+  //     : console.log('Sent All Ice');
+  // }
+
+  // ********************************************
+  // 10. Send those ICE Candidates to your friend’s computer
+  // ********************************************
+  // this.writeToFirebase(this.streamId, ICE, JSON.stringify( this.state.ice))
 
 
 
@@ -109,23 +135,9 @@ class StreamTest extends Component {
 
 
 
-  sendMessage(docId, senderId, data) {
-    const msg = db
-      .collection('users')
-      .doc(docId)
-      .set({
-        message: data,
-        sender: senderId
-      });
-    // msg.remove();
-  }
 
-  readMessageAndDo(docId, func) {
-    const document = db.collection('users').doc(docId)
-    const msg = JSON.parse(document.data().message);
-    const sender = document.data().sender;
-    func(msg, sender)
-  }
+
+
 
   setIceCandidate(msg, sender) {
     if (sender !== myId) {
@@ -191,10 +203,29 @@ class StreamTest extends Component {
   // }
 
 
+  componentDidMount() {
 
 
 
+    const friendsVideo = document.getElementById('friendsVideo');
 
+    this.pc.onicecandidate = event => {
+      if (event.candidate) {
+        this.setState({ice: event.candidate})
+      } else {
+        console.log('Sent All Ice');
+      }
+    }
+
+    this.pc.onaddstream = event => (friendsVideo.srcObject = event.stream);
+
+    db.collection('users')
+      .doc('dan')
+      .onSnapshot(doc => {
+        console.log('Current data: ', doc.data().message);
+        this.readMessage(doc);
+      });
+  }
 
   render() {
     return (
