@@ -14,26 +14,11 @@ export default class PeerViewer extends Component {
     });
 
     let conn = peer.connect('streamerJavierLilahJackie');
-    conn.on('open', function() {
-      // Receive messages
-      conn.on('data', function(data) {
-        console.log('Received', data);
-      });
-
-      // Send messages
-      conn.send('Hello!');
-    });
-
-    peer.on('connection', conn => {
-      console.log('conected - conn object', conn);
-      console.log('connections', peer.connections);
-    });
 
     peer.on('call', function(call) {
       // Answer the call, providing our mediaStream
       call.answer();
       console.log('call answered');
-      console.log('what is a call?', call)
       call.on('stream', function(stream) {
         myVideo.srcObject = stream;
         console.log('stream added to video object');
