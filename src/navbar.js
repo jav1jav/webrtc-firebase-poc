@@ -6,7 +6,9 @@ const Navbar = () => (
     <h3>Testing WebRTC Connections</h3>
     <nav>
       <Link to="/streamer">Streamer</Link> <br></br>
-      <Link to="/viewer">Viewer</Link>
+      <Link to="/viewer">Viewer</Link><br></br>
+      <Link to="/peerstreamer">PeerStreamer</Link><br></br>
+      <Link to="/peerviewer">PeerViewer</Link><br></br>
     </nav>
   </div>
 );

@@ -3,6 +3,8 @@ import React, { Component } from 'react';
 import { withRouter, Route, Switch } from 'react-router-dom';
 import Viewer from './viewer';
 import Streamer from './streamer';
+import PeerViewer from './peerViewer';
+import PeerStreamer from './peerStreamer';
 
 // class Routes extends Component {
 //   render() {
@@ -16,9 +18,12 @@ import Streamer from './streamer';
 // }
 
 const Routes = () => (
-  <Switch> // Switch only necessary to handle if routes should match exactly or
+  //Switch only necessary to handle if routes should match exactly or
+  <Switch>
     <Route exact path="/viewer" component={Viewer} />
     <Route exact path="/streamer" component={Streamer} />
+    <Route exact path="/peerviewer" component={PeerViewer} />
+    <Route exact path="/peerstreamer" component={PeerStreamer} />
   </Switch>
 );
 
