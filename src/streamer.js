@@ -1,58 +1,57 @@
 import React, { Component } from 'react';
 import db from './firebase';
 
-const OFFER = 'offer'
-const ICE = 'ice'
+const ICE = 'ice';
+const OFFER = 'offer';
+const ANSWER = 'answer';
 
-
-class StreamTest extends Component {
+class Streamer extends Component {
   constructor() {
-    super()
+    super();
     this.state = {
-      streamId: '',
+      viewerId: 'viewer',
+      streamerId: 'streamer',
       pc: {},
       ice: {}
-    }
-    this.sendMessage = this.sendMessage.bind(this);
-    this.readMessage = this.readMessage.bind(this);
-    // this.showMyFace = this.showMyFace.bind(this)
-    this.showFriendsFace = this.showFriendsFace.bind(this);
+    };
   }
 
-  // ********************************************
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
   // * Helper Funcs: read from/ write to firebase
-  // ********************************************
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
 
-  writeToFirebase(streamId, field, value) {
+  writeToFirebase(id, field, value) {
     let msg;
     switch (field) {
-      case 'string1':{
-        return db.collection('users').doc(streamId).set({string1: value});
+      case 'string1': {
+        return db
+          .collection('users')
+          .doc(id)
+          .set({ string1: value });
       }
       default: {
-        console.log('default switch for writeToFirebase')
+        console.log('default switch for writeToFirebase');
       }
     }
     // msg.remove();
   }
-  readFromFirebase(streamId, field) {
-    const document = db.collection('users').doc(streamId)
+  readFromFirebase(id, field) {
+    const document = db.collection('users').doc(id);
     let msg;
     switch (field) {
-      case 'string1':{
+      case 'string1': {
         return JSON.parse(document.data().string1);
       }
       default: {
-        console.log('default switch for writeToFirebase')
+        console.log('default switch for writeToFirebase');
       }
     }
   }
 
-
-  // ********************************************
-  // 3. Create a PeerConnection on your computer
-  // 9. Generate Ice Candidates on your computer
-  // ********************************************
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  // 3. Create a PeerConnection on STREAMER computer
+  // 9. Generate Ice Candidates on STREAMER computer
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
   createLocalPeerConnectionWithIceCandidates() {
     const servers = {
       iceServers: [
@@ -72,159 +71,97 @@ class StreamTest extends Component {
 
   //{/* 4. friend needs to create their own peer connection */}
 
-  createLocalOfferAddToPeerConnection () {
-    // ********************************************
+  streamerCreateLocalOfferAddToPeerConnection() {
+    // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
     // 5. Create an Offer on your computer
-    // ********************************************
-    this.pc.createOffer()
-    // ********************************************
-    // 6. Add that Offer to the PeerConnection on your computer
-    // ********************************************
-      .then(offer => this.pc.setLocalDescription(offer))
+    // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+    this.pc
+      .createOffer()
+      // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+      // 6. Add that Offer to the PeerConnection on your computer
+      // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+      .then(offer => this.pc.setLocalDescription(offer));
   }
 
-  // ********************************************
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
   // 7. Send that Offer to your friend’s computer
-  // ********************************************
-  sendOffer() {
-    this.writeToFirebase(this.sessionId, OFFER, JSON.stringify({'sdp': this.pc.localDescription}))
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  streamerWriteOffer() {
+    this.writeToFirebase(
+      this.streamerId,
+      OFFER,
+      JSON.stringify({ sdp: this.pc.localDescription })
+    );
   }
-
-
 
   //{/* 8. friend needs to add offer to their peer connection */}
 
-  // ********************************************
-  // 9. Add friend's ICE Candidates on your computer
-  // ********************************************
-  addFriendsIceCandidates(msg) {
-    this.pc.addIceCandidate(new RTCIceCandidate(msg.ice))
-  }
+  // 9. Generate ICE Candidates on STREMER computer - see step 3 and
+  // comment in componentDidMount
 
-
-
-  // ********************************************
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
   // 10. Send those ICE Candidates to your friend’s computer
-  // ********************************************
-  // sendIceCandidatesToFriend() {
-  //   this.pc.onicecandidate = event =>
-  //   event.candidate
-  //     ? this.writeToFirebase(sessionId, ICE, JSON.stringify({ ice: event.candidate }))
-  //     : console.log('Sent All Ice');
-  // }
-
-  // ********************************************
-  // 10. Send those ICE Candidates to your friend’s computer
-  // ********************************************
-  // this.writeToFirebase(this.streamId, ICE, JSON.stringify( this.state.ice))
-
-
-
-  setOffer(msg, sender) {
-    if (sender !== myId) {
-      if (msg.sdp.type == 'offer') {
-        pc.setRemoteDescription(new RTCSessionDescription(msg.sdp))
-      } else {
-        console.log('error: setOffer: spd.type is not an offer')
-      }
-    } else {
-      console.log('error: setOffer: read own message')
-    }
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  sendIceCandidatesToFriend() {
+    this.writeToFirebase(this.streamerId, ICE, JSON.stringify(this.state.ice));
   }
 
+  //{/* 11. Add STREMERs ICE Candidates on VIEWER computer */}
+  //{/* 12. Create an Answer on your friend’s VIEWER computer */}
+  //{/* 13. Add that Answer to the PeerConnection on your friend’s computer */}
+  //{/* 14. Send that Answer to STREAMER computer */}
 
-
-
-
-
-
-
-  setIceCandidate(msg, sender) {
-    if (sender !== myId) {
-      if (msg.ice !== undefined) {
-        pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-      } else {
-        console.log('error: setIceCandidate: ice candidate already set')
-      }
-    } else {
-      console.log('error: setIceCandidate: read own message')
-    }
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  // 15. Add that Answer to the PeerConnection on your computer
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  addAnswerToPeerConnection() {
+    const ans = this.readFromFirebase(this.viewerId, ANSWER);
+    //if (msg.sdp.type == 'answer')
+    this.pc.setRemoteDescription(new RTCSessionDescription(ans));
   }
 
+  //{/* 16. Generate Ice Candidates on VIEWER computer */}
+  //{/* 17. Send VIEWER ICE Candidates to your STREMERS computer */}
 
-  createAnswer(msg, sender) {
-    if (sender !== myId) {
-      if (msg.sdp.type == 'offer') {
-        pc.createAnswer().then(answer => pc.setLocalDescription(answer))
-      } else {
-        console.log('error: createAnswer: spd.type is not an offer')
-      }
-    } else {
-      console.log('error: createAnswer: read own message')
-    }
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  // 18. Add friend's ICE Candidates on your computer
+  // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  addFriendsIceCandidates() {
+    const msg = this.readFromFirebase(this.viewerId, ICE);
+    this.pc.addIceCandidate(new RTCIceCandidate(msg.ice));
   }
-
-  sendAnswer() {
-    sendMessage(
-      myId.toString(),
-      JSON.stringify({ sdp: pc.localDescription })
-    )
-  }
-
-
-  // readMessage(docId, info) {
-  //   const msg = JSON.parse(info.data().message);
-  //   const sender = info.data().sender;
-
-  //   if (sender != myId) {
-  //     if (msg.ice != undefined)
-  //       pc.addIceCandidate(new RTCIceCandidate(msg.ice));
-
-  //     else if (msg.sdp.type == 'offer')
-
-  //         .then(() => )
-  //         .then(answer => pc.setLocalDescription(answer))
-  //         .then(() =>
-  //           this.
-  //           )
-  //         );
-  //     else if (msg.sdp.type == 'answer')
-  //       pc.setRemoteDescription(new RTCSessionDescription(msg.sdp));
-  //   }
-  // }
-
-  // console.log('read:  ', read)
-
-  // showMyFace() {
-  // console.log('running showmyface')
-  // navigator.mediaDevices.getUserMedia({audio:true, video:true})
-  // .then(stream => myVideo.srcObject = stream)
-  // .then(stream => pc.addStream(stream));
-  // }
-
 
   componentDidMount() {
-
-
-
+    const myVideo = document.getElementById('myVideo');
     const friendsVideo = document.getElementById('friendsVideo');
 
+    // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+    // 9. Generate / Store received Ice candidates
+    // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+    // in STREAMER step 3. we create peerConnection and specify STUN servers.
+    // Those servers send ICE Candidates, and add them to the PeerConnection
+    // automatically. This statement sets the event listener for that event.
+    // The trick is we need to access these ICE candidates and send them to our
+    // VIEWER to add to his PC.
+    // We use this event listener to save ICE Candidates to this.state and then
+    // in 10. we write to firebase, and 11. the VIEWER reads those values
+    // and adds to his peerConnection
+    // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
     this.pc.onicecandidate = event => {
       if (event.candidate) {
-        this.setState({ice: event.candidate})
+        this.setState({ ice: event.candidate });
       } else {
         console.log('Sent All Ice');
       }
-    }
+    };
 
     this.pc.onaddstream = event => (friendsVideo.srcObject = event.stream);
 
-    db.collection('users')
-      .doc('dan')
-      .onSnapshot(doc => {
-        console.log('Current data: ', doc.data().message);
-        this.readMessage(doc);
-      });
+    //Show my face
+    navigator.mediaDevices
+      .getUserMedia({ audio: true, video: true })
+      .then(stream => (myVideo.srcObject = stream))
+      .then(stream => this.pc.addStream(stream));
   }
 
   render() {
@@ -233,23 +170,71 @@ class StreamTest extends Component {
         <video id="myVideo" autoPlay muted />
         <video id="friendsVideo" autoPlay />
         <br />
-        <button onClick={this.createLocalPeerConnection} type="button" className="btn btn-primary btn-lg">3. createLocalPeerConnection</button>
+        <button
+          onClick={this.createLocalPeerConnectionWithIceCandidates}
+          type="button"
+          className="btn btn-primary btn-lg"
+        >
+          3. createLocalPeerConnectionWithIceCandidates
+        </button>
         {/* 4. friend needs to create their own peer connection */}
-        <button onClick={this.createLocalOfferAddToPeerConnection} type="button" className="btn btn-primary btn-lg">5.  6.  createLocalOfferAddToPeerConnection</button>
-        <button onClick={this.sendOfferToFriend} type="button" className="btn btn-primary btn-lg">7. sendOfferToFriend</button>
+        <button
+          onClick={this.streamerCreateLocalOfferAddToPeerConnection}
+          type="button"
+          className="btn btn-primary btn-lg"
+        >
+          5. 6. streamerCreateLocalOfferAddToPeerConnection
+        </button>
+        <button
+          onClick={this.streamerWriteOffer}
+          type="button"
+          className="btn btn-primary btn-lg"
+        >
+          7. streamerWriteOffer
+        </button>
         {/* 8. friend needs to add offer to their peer connection */}
-        <button onClick={this.generateIceCandidates} type="button" className="btn btn-primary btn-lg">9. generateIceCandidates</button>
-        <button onClick={this.sendIceCandidatesToFriend} type="button" className="btn btn-primary btn-lg">10. sendIceCandidatesToFriend</button>
+        {/* 9. ice candidates rendered in 3 and in CDM */}
+        <button
+          onClick={this.sendIceCandidatesToFriend}
+          type="button"
+          className="btn btn-primary btn-lg"
+        >
+          10. sendIceCandidatesToFriend
+        </button>
         {/* 11. friend needs to add ice candidates to their peer connection*/}
         {/* 12. 13. friend creates answer on their computer and adds to peer connection*/}
         {/* 14. friend sends answer to me local here*/}
-        <button onClick={this.addAnswerToPeerConnection} type="button" className="btn btn-primary btn-lg">15. addAnswerToPeerConnection</button>
+        <button
+          onClick={this.addAnswerToPeerConnection}
+          type="button"
+          className="btn btn-primary btn-lg"
+        >
+          15. addAnswerToPeerConnection
+        </button>
         {/* 16. 17. friend generates ice candidates and sends them to me local here */}
-        <button onClick={this.addIceCandidates} type="button" className="btn btn-primary btn-lg">18. addIceCandidates</button>
+        <button
+          onClick={this.addFriendsIceCandidates}
+          type="button"
+          className="btn btn-primary btn-lg"
+        >
+          18. addFriendsIceCandidates
+        </button>
         {/* <button onClick={this.displayMediaStream} type="button" className="btn btn-primary btn-lg">xxx</button> */}
+        {/* <br />
+        <button
+          onClick={this.showFriendsFace}
+          type="button"
+          className="btn btn-primary btn-lg"
+        >
+          <span
+            className="glyphicon glyphicon-facetime-video"
+            aria-hidden="true"
+          />{' '}
+          Call
+        </button> */}
       </div>
     );
   }
 }
 
-export default StreamTest;
+export default Streamer;
