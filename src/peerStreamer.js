@@ -31,7 +31,6 @@ export default class PeerStreamer extends Component {
       console.log('connections - CALL MADE');
     });
 
-
   }
 
   render() {
