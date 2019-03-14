@@ -198,7 +198,8 @@ class Streamer extends Component {
     const ans = await this.readFromFirebase(this.state.viewerId, ANSWER);
     if (ans.sdp.type === 'answer') console.log('bingo')
     console.log('answer from viewer', ans)
-    this.state.pc.setRemoteDescription(new RTCSessionDescription(ans.spd));
+    console.log('ans.spd', ans.sdp)
+    this.state.pc.setRemoteDescription(new RTCSessionDescription(ans.sdp));
     console.log('end of step 15 (read and add answer) | this.state', this.state)
   }
 
