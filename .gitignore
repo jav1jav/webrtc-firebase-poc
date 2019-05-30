@@ -22,3 +22,5 @@ yarn-error.log*
 
 # secrets
 secrets.js
+secrets.env
+.env
