@@ -30,7 +30,6 @@ class Viewer extends Component {
   // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
   writeToFirebase(id, field, value) {
-    let msg;
     switch (field) {
       case ANSWER: {
         return db
@@ -48,12 +47,10 @@ class Viewer extends Component {
         console.log('default switch for writeToFirebase');
       }
     }
-    // msg.remove();
   }
   async readFromFirebase(id, field) {
     const document = await db.collection('users').doc(id).get();
     console.log('readFromFirebase', document.data())
-    let msg;
     switch (field) {
       case OFFER: {
         return JSON.parse(document.data().offer);

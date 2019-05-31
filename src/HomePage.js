@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Navbar = () => (
+const HomePage = () => (
   <div>
     <h3>Testing WebRTC Connections</h3>
     <nav>
@@ -13,4 +13,4 @@ const Navbar = () => (
   </div>
 );
 
-export default Navbar
+export default HomePage

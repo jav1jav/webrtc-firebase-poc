@@ -30,7 +30,6 @@ class Streamer extends Component {
   // SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
 
   writeToFirebase(id, field, value) {
-    let msg;
     switch (field) {
       case OFFER: {
         return db
@@ -48,11 +47,9 @@ class Streamer extends Component {
         console.log('default switch for writeToFirebase');
       }
     }
-    // msg.remove();
   }
   async readFromFirebase(id, field) {
     const document = await db.collection('users').doc(id).get();
-    let msg;
     console.log('readFromFirebase', document.data())
     switch (field) {
       case ANSWER: {
