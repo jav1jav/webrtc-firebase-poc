@@ -3,14 +3,14 @@ import React, { Component } from 'react';
 import './App.css';
 // import StreamTest from './stream-test'
 // import FriendStreamTest from './friend-stream-test'
-import Navbar from './navbar';
+import HomePage from './HomePage';
 import Routes from './routes';
 
 class App extends Component {
   render() {
     return (
       <div className="App">
-        <Navbar />
+        <HomePage />
         <Routes />
       </div>
     );
