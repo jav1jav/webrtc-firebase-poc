@@ -21,13 +21,13 @@ export default class PeerStreamer extends Component {
         streamerStream = stream;
       });
 
-    let call;
     peer.on('connection', conn => {
+
       console.log('conected - streamerStream', streamerStream);
       console.log('conected - conn object', conn);
       console.log('conected - conn.peer', conn.peer);
       console.log('connections', peer.connections);
-      call = peer.call(conn.peer, streamerStream)
+      peer.call(conn.peer, streamerStream)
       console.log('connections - CALL MADE');
     });
 

@@ -13,7 +13,7 @@ export default class PeerViewer extends Component {
       console.log('my id is ', id);
     });
 
-    let conn = peer.connect('streamerJavierLilahJackie');
+    peer.connect('streamerJavierLilahJackie');
 
     peer.on('call', function(call) {
       // Answer the call, providing our mediaStream
