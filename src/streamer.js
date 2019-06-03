@@ -212,8 +212,13 @@ class Streamer extends Component {
     console.log('end of step 18 (add viewer ice) | this.state', this.state)
   }
 
-  componentDidMount() {
-
+  async componentDidMount() {
+    await this.createLocalPeerConnectionWithIceCandidates()
+    console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
+    await this.streamerCreateLocalOfferAddToPeerConnection()
+    console.log( 'streamer.js | CDM | streamerCreateLocalOfferAddToPeerConnection has run')
+    await this.streamerWriteOffer()
+    console.log( 'streamer.js | CDM | streamerWriteOffer has run')
   }
 
   render() {
@@ -222,62 +227,41 @@ class Streamer extends Component {
         <video id="myVideo" autoPlay muted />
         <video id="friendsVideo" autoPlay />
         <br />
-        <button
-          onClick={this.consoleLogThisState}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          consoleLogThisState
-        </button>
-        <button
-          onClick={this.createLocalPeerConnectionWithIceCandidates}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          3. createLocalPeerConnectionWithIceCandidates
-        </button>
+        {/* <button onClick={this.consoleLogThisState} type="button" className="btn btn-primary btn-lg">
+            consoleLogThisState
+        </button> */}
+
+        {/* <button onClick={this.createLocalPeerConnectionWithIceCandidates} type="button" className="btn btn-primary btn-lg">
+            3. createLocalPeerConnectionWithIceCandidates
+        </button> */}
+
         {/* 4. friend needs to create their own peer connection */}
-        <button
-          onClick={this.streamerCreateLocalOfferAddToPeerConnection}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          5. 6. streamerCreateLocalOfferAddToPeerConnection
-        </button>
-        <button
-          onClick={this.streamerWriteOffer}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          7. streamerWriteOffer
-        </button>
+        {/* <button onClick={this.streamerCreateLocalOfferAddToPeerConnection} type="button" className="btn btn-primary btn-lg">
+            5. 6. streamerCreateLocalOfferAddToPeerConnection
+        </button> */}
+
+        {/* <button onClick={this.streamerWriteOffer} type="button" className="btn btn-primary btn-lg">
+            7. streamerWriteOffer
+        </button> */}
+
         {/* 8. friend needs to add offer to their peer connection */}
         {/* 9. ice candidates rendered in 3 and in CDM */}
-        <button
-          onClick={this.sendIceCandidatesToFriend}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          10. sendIceCandidatesToFriend
+        <button onClick={this.sendIceCandidatesToFriend} type="button" className="btn btn-primary btn-lg">
+            10. sendIceCandidatesToFriend
         </button>
+
         {/* 11. friend needs to add ice candidates to their peer connection*/}
         {/* 12. 13. friend creates answer on their computer and adds to peer connection*/}
         {/* 14. friend sends answer to me local here*/}
-        <button
-          onClick={this.addAnswerToPeerConnection}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          15. addAnswerToPeerConnection
+        <button onClick={this.addAnswerToPeerConnection} type="button" className="btn btn-primary btn-lg">
+            15. addAnswerToPeerConnection
         </button>
+
         {/* 16. 17. friend generates ice candidates and sends them to me local here */}
-        <button
-          onClick={this.addFriendsIceCandidates}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          18. addFriendsIceCandidates
+        <button onClick={this.addFriendsIceCandidates} type="button" className="btn btn-primary btn-lg">
+            18. addFriendsIceCandidates
         </button>
+
         {/* <button onClick={this.displayMediaStream} type="button" className="btn btn-primary btn-lg">xxx</button> */}
         {/* <br />
         <button
