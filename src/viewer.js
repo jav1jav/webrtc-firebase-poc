@@ -19,15 +19,13 @@ class Viewer extends Component {
     this.readFromFirebase = this.readFromFirebase.bind(this)
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this) // 4
     this.viewerGetStreamersOfferAddToPeerConnection = this.viewerGetStreamersOfferAddToPeerConnection.bind(this) // 8
-    this.addFriendsIceCandidates = this.addFriendsIceCandidates.bind(this)
-    this.createAnswer = this.createAnswer.bind(this)
-    this.sendAnswer = this.sendAnswer.bind(this)
-    this.sendIceCandidatesToFriend = this.sendIceCandidatesToFriend.bind(this)
+    // this.addFriendsIceCandidates = this.addFriendsIceCandidates.bind(this)
+    // this.createAnswer = this.createAnswer.bind(this)
+    // this.sendAnswer = this.sendAnswer.bind(this)
+    // this.sendIceCandidatesToFriend = this.sendIceCandidatesToFriend.bind(this)
   }
 
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
   // * Helper Funcs: read from/ write to firebase
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
   writeToFirebase(id, field, value) {
     switch (field) {
@@ -41,7 +39,7 @@ class Viewer extends Component {
         return db
           .collection('users')
           .doc(id)
-          .set({ ice: value });
+          .set({ ice: value }, { merge: true });
       }
       default: {
         console.log('default switch for writeToFirebase');
@@ -64,19 +62,12 @@ class Viewer extends Component {
     }
   }
 
-
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
   // * Helper Funcs: button to console log this.state
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
   consoleLogThisState() {
     console.log('current this.state', this.state)
   }
 
-
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
   //{/* 4. friend needs to create their own VIEWER peer connection */}
-  // 16. Generate Ice Candidates on VIEWER computer
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
   async createLocalPeerConnectionWithIceCandidates() {
     const servers = {
       iceServers: [
@@ -93,25 +84,14 @@ class Viewer extends Component {
       pc: new RTCPeerConnection(servers)
     });
 
-    // had to move this out of CDM b/c pc not created till button hit
-    // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-    // 16. Generate / Store received Ice candidates
-    // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-    // in VIEWER step 4. we create peerConnection and specify STUN servers.
-    // Those servers send ICE Candidates, and add them to the PeerConnection
-    // automatically. This statement sets the event listener for that event.
-    // The trick is we need to access these ICE candidates and send them to our
-    // STREAMER to add to his PC.
-    // We use this event listener to save ICE Candidates to this.state and then
-    // in 17. we write to firebase, and 18. the STREAMER reads those values
-    // and adds to his peerConnection
-    // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
+    // event listener that is triggered as the RTC object receives it's ice
+    // candidates and writes them to state
     this.state.pc.onicecandidate = event => {
       if (event.candidate) {
         this.setState({ ice: event.candidate });
         console.log('onicecandidate fired')
       } else {
-        console.log('Sent All Ice (aka all ice candidates have been received?)');
+        console.log('Sent All Ice (aka all ice candidates have been received?)', this.state);
       }
     };
 
@@ -129,9 +109,7 @@ class Viewer extends Component {
     console.log('end of step 4 (create PC) | this.state', this.state)
   }
 
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
   //{/* 8. viewer needs to add streamer offer to their peer connection */}
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
   async viewerGetStreamersOfferAddToPeerConnection() {
     const msg = await this.readFromFirebase(this.state.streamerId, OFFER);
     console.log('spd offer', msg)
@@ -141,50 +119,35 @@ class Viewer extends Component {
       console.log('error: viewerGetOffer: spd.type is not an offer');
     }
     console.log('end of step 8 (read streamer offer) | this.state', this.state)
-  }
 
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  // 11. Add friend's ICE Candidates on your computer
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  async addFriendsIceCandidates() {
-    const msg = await this.readFromFirebase(this.state.streamerId, ICE);
-    console.log('add stremer ice, msg', msg)
-    msg.forEach(el =>
+
+    // 11. Add friend's ICE Candidates on your computer
+    const msg2 = await this.readFromFirebase(this.state.streamerId, ICE);
+    console.log('step 11. add viewer ice, msg', msg2)
+    msg2.forEach(el =>
      this.state.pc.addIceCandidate(new RTCIceCandidate(el))
     )
     console.log('end of step 11 (add stremer ice) | this.state', this.state)
-  }
 
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  // 12. Create an Answer on your friend’s VIEWER computer
-  // 13. Add that Answer to the PeerConnection on your friend’s computer
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  createAnswer() {
-    this.state.pc.createAnswer().then(answer => this.state.pc.setLocalDescription(answer));
-    console.log('end of step 12, 13 (create answer) | this.state', this.state)
-  }
-
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  // 14. Send that Answer to STREAMER computer
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  sendAnswer() {
+    // 12. Create an Answer on your friend’s VIEWER computer
+    // 13. Add that Answer to the PeerConnection on your friend’s computer
+    // 14. Send that Answer to STREAMER computer
+    const answer = await this.state.pc.createAnswer()
+    await this.state.pc.setLocalDescription(answer);
+    console.log('end of step 12, 13 (create answer) | this.state', this.state, 'localDescription', this.state.pc  )
     this.writeToFirebase(this.state.viewerId, ANSWER, JSON.stringify({ 'sdp': this.state.pc.localDescription }));
     console.log('end of step 14 (write answer) | this.state', this.state)
-  }
 
-  // 16. Generate Ice Candidates on VIEWER computer - SEE STEP 4 and
-  // componentDidMount !!!
-
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  // 17. Send your ICE Candidates to your friend’s computer
-  // VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
-  sendIceCandidatesToFriend() {
+    // 16. Generate Ice Candidates on VIEWER computer - SEE STEP 4
+    // 17. Send your ICE Candidates to your friend’s computer
     this.writeToFirebase(this.state.viewerId, ICE, JSON.stringify(this.state.ice));
     console.log('end of step 17 (write ice) | this.state', this.state)
+
   }
 
   componentDidMount() {
-
+    this.createLocalPeerConnectionWithIceCandidates()
+    console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
   }
 
   render() {
@@ -193,67 +156,21 @@ class Viewer extends Component {
         <video id="myVideo" autoPlay muted />
         <video id="friendsVideo" autoPlay />
         <br />
-        <button
-          onClick={this.consoleLogThisState}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          consoleLogThisState
-        </button>
-        <button
-          onClick={this.createLocalPeerConnectionWithIceCandidates}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          4. createLocalPeerConnectionWithIceCandidates
-        </button>
-        <button
-          onClick={this.viewerGetStreamersOfferAddToPeerConnection}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          8. viewerGetStreamersOfferAddToPeerConnection
-        </button>
-        <button
-          onClick={this.addFriendsIceCandidates}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          11. addFriendsIceCandidates
-        </button>
-        <button
-          onClick={this.createAnswer}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          12. 13. createAnswer
-        </button>
-        <button
-          onClick={this.sendAnswer}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          14. sendAnswer
-        </button>
-        <button
+
+        {/*<button
           onClick={this.sendIceCandidatesToFriend}
           type="button"
           className="btn btn-primary btn-lg"
         >
           17. sendIceCandidatesToFriend
-        </button>
-        {/* <br />
-        <button
-          onClick={this.showFriendsFace}
-          type="button"
-          className="btn btn-primary btn-lg"
-        >
-          <span
-            className="glyphicon glyphicon-facetime-video"
-            aria-hidden="true"
-          />{' '}
-          Call
         </button> */}
+
+
+        <button onClick={this.viewerGetStreamersOfferAddToPeerConnection}
+        type="button" className="btn btn-primary btn-lg">
+          <span className="glyphicon glyphicon-facetime-video" aria-hidden="true"/>{' '} CreateAnswer and Write
+        </button>
+
       </div>
     );
   }
