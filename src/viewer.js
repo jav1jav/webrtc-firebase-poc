@@ -148,6 +148,8 @@ class Viewer extends Component {
   componentDidMount() {
     this.createLocalPeerConnectionWithIceCandidates()
     console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
+    this.viewerGetStreamersOfferAddToPeerConnection()
+    console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
   }
 
   render() {
@@ -166,10 +168,10 @@ class Viewer extends Component {
         </button> */}
 
 
-        <button onClick={this.viewerGetStreamersOfferAddToPeerConnection}
+        {/* <button onClick={this.viewerGetStreamersOfferAddToPeerConnection}
         type="button" className="btn btn-primary btn-lg">
           <span className="glyphicon glyphicon-facetime-video" aria-hidden="true"/>{' '} CreateAnswer and Write
-        </button>
+        </button> */}
 
       </div>
     );
