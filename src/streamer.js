@@ -12,11 +12,13 @@ class Streamer extends Component {
       viewerId: 'viewer',
       streamerId: 'streamer',
       pc: {},
-      ice: []
+      ice: [],
+      ans: {}
     };
     this.consoleLogThisState = this.consoleLogThisState.bind(this)
     this.writeToFirebase = this.writeToFirebase.bind(this)
     this.readFromFirebase = this.readFromFirebase.bind(this)
+    this.linkToViewerSnapshot = this.linkToViewerSnapshot.bind(this)
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this) // 3
     this.streamerCreateLocalOfferAddToPeerConnection = this.streamerCreateLocalOfferAddToPeerConnection.bind(this) // 5, 6
     // this.streamerWriteOffer = this.streamerWriteOffer.bind(this) // 7
@@ -61,6 +63,25 @@ class Streamer extends Component {
         console.log('default switch for writeToFirebase');
       }
     }
+  }
+
+  async linkToViewerSnapshot(id) {
+    await db.collection('users')
+      .doc(id).onSnapshot( document => {
+        console.log('streamer.js | linkToViewerSnapshot before setState | this.state', this.state, 'document.data', document.data())
+        let ans = JSON.parse(document.data().answer)
+        console.log('ans !!!!!!', ans)
+        if ( ans.sdp ) {
+          console.log('streamer.js | linkToViewerSnapshot | answer has value')
+
+          this.state.pc.setRemoteDescription(new RTCSessionDescription(ans.sdp))
+          this.setState({
+            ...this.state,
+            ans: ans})
+          console.log('streamer.js | state', this.state)
+        }
+        console.log('streamer.js | linkToViewerSnapshot after setState | this.state', this.state, 'document.data', document.data())
+      })
   }
 
   // * Helper Funcs: button to console log this.state
@@ -174,9 +195,15 @@ class Streamer extends Component {
   componentDidMount() {
     this.createLocalPeerConnectionWithIceCandidates()
     console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
+    if (this.state.viewerId) {
+      console.log('streamer.js | render | viewerId on state has value, linking to snapshot (god willing)')
+      this.linkToViewerSnapshot(this.state.viewerId)
+    }
   }
 
   render() {
+
+
     return (
       <div>
         <video id="myVideo" autoPlay muted />
@@ -189,9 +216,9 @@ class Streamer extends Component {
         </button>
 
 
-        <button onClick={this.addAnswerToPeerConnection} type="button" className="btn btn-primary btn-lg">
+        {/* <button onClick={this.addAnswerToPeerConnection} type="button" className="btn btn-primary btn-lg">
             15. addAnswerToPeerConnection
-        </button>
+        </button> */}
 
       </div>
     );
