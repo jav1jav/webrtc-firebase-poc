@@ -21,7 +21,7 @@ class Streamer extends Component {
     this.streamerCreateLocalOfferAddToPeerConnection = this.streamerCreateLocalOfferAddToPeerConnection.bind(this) // 5, 6
     // this.streamerWriteOffer = this.streamerWriteOffer.bind(this) // 7
     // this.sendIceCandidatesToFriend = this.sendIceCandidatesToFriend.bind(this)
-    // this.addAnswerToPeerConnection = this.addAnswerToPeerConnection.bind(this)
+    this.addAnswerToPeerConnection = this.addAnswerToPeerConnection.bind(this)
 
   }
 
