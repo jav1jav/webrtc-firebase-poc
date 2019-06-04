@@ -129,7 +129,7 @@ class Streamer extends Component {
     this.state.pc.onaddstream = event => (friendsVideo.srcObject = event.stream);
 
     //Show my face
-    window.navigator.mediaDevices
+    navigator.mediaDevices
       .getUserMedia({ audio: true, video: true })
       .then(stream => (myVideo.srcObject = stream))
       .then(stream => this.state.pc.addStream(stream));
