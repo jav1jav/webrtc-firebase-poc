@@ -4,6 +4,7 @@ import db from './firebase';
 const ICE = 'ice';
 const OFFER = 'offer';
 const ANSWER = 'answer';
+const COMPLETE = 'complete';
 
 class Streamer extends Component {
   constructor() {
@@ -13,7 +14,7 @@ class Streamer extends Component {
       streamerId: 'streamer',
       pc: {},
       ice: [],
-      ans: {}
+      ans: {},
     };
     this.consoleLogThisState = this.consoleLogThisState.bind(this)
     this.writeToFirebase = this.writeToFirebase.bind(this)
@@ -44,7 +45,7 @@ class Streamer extends Component {
           .set({ ice: value }, { merge: true });
       }
       default: {
-        console.log('default switch for writeToFirebase');
+        console.log('default value in switch for writeToFirebase');
       }
     }
   }
@@ -68,17 +69,28 @@ class Streamer extends Component {
   async linkToViewerSnapshot(id) {
     await db.collection('users')
       .doc(id).onSnapshot( document => {
-        console.log('streamer.js | linkToViewerSnapshot before setState | this.state', this.state, 'document.data', document.data())
+        // console.log('streamer.js | linkToViewerSnapshot before setState | this.state', this.state, 'document.data', document.data())
         let ans = JSON.parse(document.data().answer)
-        console.log('ans !!!!!!', ans)
-        if ( ans.sdp ) {
-          console.log('streamer.js | linkToViewerSnapshot | answer has value')
+        // console.log('ans !!!!!!', ans)
+        if ( ans.sdp ) { //&& this.state.pc.localDescription === 'stable'
+          // console.log('streamer.js | linkToViewerSnapshot | answer has value')
 
           this.state.pc.setRemoteDescription(new RTCSessionDescription(ans.sdp))
           this.setState({
             ...this.state,
             ans: ans})
-          console.log('streamer.js | state', this.state)
+          // console.log('streamer.js | state', this.state)
+        }
+        // eslint-disable-next-line no-unused-vars
+        let ice = JSON.parse(document.data().ice)
+        if ( ice ) {
+          // const msg = await this.readFromFirebase(this.state.viewerId, ICE);
+          ice.forEach(el =>
+            this.state.pc.addIceCandidate(new RTCIceCandidate(el)));
+          console.log('end of step 18 (add viewer ice) | this.state', this.state)
+          this.setState({
+            ...this.state,
+            ice: ice})
         }
         console.log('streamer.js | linkToViewerSnapshot after setState | this.state', this.state, 'document.data', document.data())
       })
@@ -113,9 +125,9 @@ class Streamer extends Component {
       if (event.candidate) {
         this.setState({ ice: [...this.state.ice, event.candidate] });
         console.log('onicecandidate fired')
-        if ( this.state.ice.length > 7 ) {
-          this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
-        }
+        // if ( this.state.ice.length > 7 ) {
+        //   this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
+        // }
       } else {
         this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
         console.log('end of step 10 (write ice / sendIceCandidatesToFriend) | this.state', this.state)
@@ -126,7 +138,7 @@ class Streamer extends Component {
     const myVideo = document.getElementById('myVideo');
     const friendsVideo = document.getElementById('friendsVideo');
 
-    this.state.pc.onaddstream = event => (friendsVideo.srcObject = event.stream);
+    this.state.pc.onaddstream = event => ( !this.state.complete ? null : friendsVideo.srcObject = event.stream);
 
     //Show my face
     navigator.mediaDevices
@@ -192,6 +204,8 @@ class Streamer extends Component {
     console.log('end of step 18 (add viewer ice) | this.state', this.state)
   }
 
+  // ######## CDM #########
+  // ######## CDM #########
   componentDidMount() {
     this.createLocalPeerConnectionWithIceCandidates()
     console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
@@ -201,6 +215,8 @@ class Streamer extends Component {
     }
   }
 
+  // ######## RENDER #######
+  // ######## RENDER #######
   render() {
 
 

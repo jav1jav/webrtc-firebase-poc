@@ -12,7 +12,8 @@ class Viewer extends Component {
       viewerId: 'viewer',
       streamerId: 'streamer',
       pc: {},
-      ice: {}
+      ice: {},
+      complete: false
     };
     this.consoleLogThisState = this.consoleLogThisState.bind(this)
     this.writeToFirebase = this.writeToFirebase.bind(this)
@@ -60,6 +61,24 @@ class Viewer extends Component {
         console.log('default switch for writeToFirebase');
       }
     }
+  }
+
+
+  async linkToViewerSnapshot(id) {
+    await db.collection('users')
+      .doc(id).onSnapshot( document => {
+        let ice = JSON.parse(document.data().ice)
+        if ( ice ) {
+          // const msg = await this.readFromFirebase(this.state.viewerId, ICE);
+          ice.forEach(el =>
+            this.state.pc.addIceCandidate(new RTCIceCandidate(el)));
+          console.log('end of step 18 (add viewer ice) | this.state', this.state)
+          this.setState({
+            ...this.state,
+            ice: ice})
+        }
+        console.log('viewer.js | linkToViewerSnapshot after setState | this.state', this.state, 'document.data', document.data())
+      })
   }
 
   // * Helper Funcs: button to console log this.state
@@ -122,12 +141,12 @@ class Viewer extends Component {
 
 
     // 11. Add friend's ICE Candidates on your computer
-    const msg2 = await this.readFromFirebase(this.state.streamerId, ICE);
-    console.log('step 11. add viewer ice, msg', msg2)
-    msg2.forEach(el =>
-     this.state.pc.addIceCandidate(new RTCIceCandidate(el))
-    )
-    console.log('end of step 11 (add stremer ice) | this.state', this.state)
+    // const msg2 = await this.readFromFirebase(this.state.streamerId, ICE);
+    // console.log('step 11. add viewer ice, msg', msg2)
+    // msg2.forEach(el =>
+    //  this.state.pc.addIceCandidate(new RTCIceCandidate(el))
+    // )
+    // console.log('end of step 11 (add stremer ice) | this.state', this.state)
 
     // 12. Create an Answer on your friend’s VIEWER computer
     // 13. Add that Answer to the PeerConnection on your friend’s computer
@@ -147,9 +166,13 @@ class Viewer extends Component {
 
   componentDidMount() {
     this.createLocalPeerConnectionWithIceCandidates()
-    console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
+    console.log( 'viewer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
+    if (this.state.streamerId) {
+      console.log('viewer.js | render | streamerId on state has value, linking to snapshot (god willing)')
+      this.linkToViewerSnapshot(this.state.streamerId)
+    }
     this.viewerGetStreamersOfferAddToPeerConnection()
-    console.log( 'streamer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
+    console.log( 'viewer.js | CDM | createLocalPeerConnectionWithIceCandidates has run')
   }
 
   render() {
