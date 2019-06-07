@@ -92,36 +92,20 @@ class Streamer extends Component {
   async linkToViewerSnapshot(id) {
     await db.collection('users')
       .doc(id).onSnapshot( document => {
-        console.log('snapshot | document.data()', document.data())
         let data = document.data()
-        console.log( 'truth | data ', data ? true : false )
         if ( data ) {
           // GET VIEWER'S ANSWER
-
-          console.log( 'truth | data.answer=', data.answer, 'truth=', data.answer  ? true : false )
-
           if ( data.answer ) { //&& this.state.pc.localDescription === 'stable'
             data.answer = JSON.parse(data.answer)
             this.state.pc.setRemoteDescription(new RTCSessionDescription(data.answer.sdp))
             this.setState({ ...this.state, ans: data.answer })
-            this.writeToFirebase(this.state.viewerId, ANSWER, "")
-            console.log('within answer | state: ', this.state)
           }
           // GET VIEWER'S ICE CANDIDATES
-          // data.ice = JSON.parse(data.ice)
-          console.log( 'truth | data.ice=', data.ice)
-          console.log( 'truth=', data.ice ? true : false )
           if ( data.ice  ) {
             data.ice = JSON.parse(data.ice)
             data.ice.forEach(el =>{
-              console.log('get viewers ice | inside forEach for ice | el:', el)
               this.state.pc.addIceCandidate(new RTCIceCandidate(el))
-            }
-
-              );
-            this.setState({ ...this.state, ice: data.ice })
-            // this.writeToFirebase(this.state.viewerId, ICE, "")
-            console.log('within ice | state: ', this.state)
+            })
           }
         }
       })
@@ -140,9 +124,8 @@ class Streamer extends Component {
     this.state.pc.onicecandidate = event => {
       if (event.candidate) {
         this.setState({ ice: [...this.state.ice,  event.candidate] });
-        console.log('Onicecandidate fired, event=', event.candidate)
+        console.log('Onicecandidate fired')
         if ( this.state.ice.length > 7 ) {
-          console.log('writing to FB | state.ice=', this.state.ice)
           this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
         }
       } else {

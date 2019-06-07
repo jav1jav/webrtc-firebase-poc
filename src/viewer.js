@@ -72,21 +72,14 @@ class Viewer extends Component {
   async linkToViewerSnapshot(id) {
     await db.collection('users')
       .doc(id).onSnapshot( document => {
-        console.log('snapshot | document.data()', document.data())
         let data = document.data()
-        console.log( 'truth | data ', data ? true : false )
 
-        console.log( 'truth | data.ice=', data.ice, 'truth=', data.ice ? true : false )
-
+        // GET STREAMER'S ICE CANDIDATES
         if ( data.ice  ) {
           data.ice = JSON.parse(data.ice)
           data.ice.forEach(el => {
-            console.log('inside forEach for ice | el:', JSON.parse(el))
-            this.state.pc.addIceCandidate(new RTCIceCandidate(JSON.parse(el)))
+            this.state.pc.addIceCandidate(new RTCIceCandidate((el)))
           })
-          this.setState({ ...this.state, ice: data.ice })
-          this.writeToFirebase(this.state.viewerId, ICE, "")
-          console.log('within ice | state: ', this.state)
         }
 
       })
@@ -94,6 +87,8 @@ class Viewer extends Component {
 
   // CDM - CREATE CONNECTION & ICE CANDIDATES, & DISPLAY VIDEO STREAMS
   async createLocalPeerConnectionWithIceCandidates() {
+
+    // CREATE CONNECTION
     const servers = { iceServers: SERVERS };
     await this.setState({ pc: new RTCPeerConnection(servers) });
 
@@ -102,10 +97,14 @@ class Viewer extends Component {
     // candidates and writes them to state
     this.state.pc.onicecandidate = event => {
       if (event.candidate) {
-        this.setState({ ice: event.candidate });
+        this.setState({ ice: [...this.state.ice,  event.candidate]  });
         console.log('onicecandidate fired')
+        if ( this.state.ice.length >= 3 ) {
+          this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
+        }
       } else {
-        console.log('Sent All Ice (aka all ice candidates have been received?)', this.state);
+        console.log('All ice candidates have been received');
+        this.writeToFirebase(this.state.viewerId, ICE, JSON.stringify(this.state.ice));
       }
     };
 
@@ -142,16 +141,15 @@ class Viewer extends Component {
     // WRITE ANSWER TO FIREBASE FOR STREAMER TO READ
     this.writeToFirebase(this.state.viewerId, ANSWER, JSON.stringify({ 'sdp': this.state.pc.localDescription }));
 
-    this.writeToFirebase(this.state.viewerId, ICE, JSON.stringify(this.state.ice));
-
   }
 
-  componentDidMount() {
-    this.createLocalPeerConnectionWithIceCandidates()
+  async componentDidMount() {
+    await this.createLocalPeerConnectionWithIceCandidates()
+    await this.viewerGetStreamersOfferAddToPeerConnection()
     if (this.state.streamerId) {
-      this.linkToViewerSnapshot(this.state.streamerId)
+      await this.linkToViewerSnapshot(this.state.streamerId)
     }
-    this.viewerGetStreamersOfferAddToPeerConnection()
+
   }
 
   render() {
