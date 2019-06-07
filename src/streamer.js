@@ -115,6 +115,7 @@ class Streamer extends Component {
             this.state.pc.setRemoteDescription(new RTCSessionDescription(data.answer.sdp))
             this.setState({ ...this.state, ans: data.answer })
             this.writeToFirebase(this.state.viewerId, ANSWER, "")
+            console.log('within answer | state: ', this.state)
           }
           // GET VIEWER'S ICE CANDIDATES
           // data.ice = JSON.parse(data.ice)
@@ -125,6 +126,7 @@ class Streamer extends Component {
               this.state.pc.addIceCandidate(new RTCIceCandidate(el)));
             this.setState({ ...this.state, ice: data.ice })
             this.writeToFirebase(this.state.viewerId, ICE, "")
+            console.log('within ice | state: ', this.state)
           }
         }
       })
