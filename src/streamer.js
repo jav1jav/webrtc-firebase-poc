@@ -143,6 +143,9 @@ class Streamer extends Component {
       if (event.candidate) {
         this.setState({ ice: [...this.state.ice, event.candidate] });
         console.log('Onicecandidate fired')
+        if ( this.state.ice.length > 7 ) {
+          this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
+        }
       } else {
         this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
         console.log('All ice candidates have been received');
