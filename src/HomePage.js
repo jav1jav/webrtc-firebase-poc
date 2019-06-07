@@ -11,8 +11,7 @@ const HomePage = () => (
     <nav>
       <Link to="/streamer">Streamer</Link> <br></br>
       <Link to="/viewer">Viewer</Link><br></br>
-      <Link to="/peerstreamer">PeerStreamer</Link><br></br>
-      <Link to="/peerviewer">PeerViewer</Link><br></br>
+      <Link to="/Initializer">Initializer</Link><br></br>
     </nav>
   </div>
 );

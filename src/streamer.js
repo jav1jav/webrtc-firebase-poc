@@ -5,6 +5,7 @@ const ICE = 'ice';
 const OFFER = 'offer';
 const ANSWER = 'answer';
 const SERVERS = [
+  //THESE ARE SERVERS THE CONNECTION WILL USE TO CREATE THE ICE SERVERS
   { urls: 'stun:stun.services.mozilla.com' },
   { urls: 'stun:stun.l.google.com:19302' },
   {
@@ -87,17 +88,6 @@ class Streamer extends Component {
     console.log('initialize')
   }
 
-  // * HELPER - EMPTY OBJECT CHECK
-  isEmptyObject(obj) {
-    for(var prop in obj) {
-      if(obj.hasOwnProperty(prop)) {
-        return false;
-      }
-    }
-    return JSON.stringify(obj) === JSON.stringify({});
-  }
-
-
   // * HELPER - SNAPSHOT
   async linkToViewerSnapshot(id) {
     await db.collection('users')
@@ -119,33 +109,40 @@ class Streamer extends Component {
           }
           // GET VIEWER'S ICE CANDIDATES
           // data.ice = JSON.parse(data.ice)
-          console.log( 'truth | data.ice=', data.ice, 'truth=', data.ice ? true : false )
+          console.log( 'truth | data.ice=', data.ice)
+          console.log( 'truth=', data.ice ? true : false )
           if ( data.ice  ) {
             data.ice = JSON.parse(data.ice)
-            data.ice.forEach(el =>
-              this.state.pc.addIceCandidate(new RTCIceCandidate(el)));
+            data.ice.forEach(el =>{
+              console.log('get viewers ice | inside forEach for ice | el:', el)
+              this.state.pc.addIceCandidate(new RTCIceCandidate(el))
+            }
+
+              );
             this.setState({ ...this.state, ice: data.ice })
-            this.writeToFirebase(this.state.viewerId, ICE, "")
+            // this.writeToFirebase(this.state.viewerId, ICE, "")
             console.log('within ice | state: ', this.state)
           }
         }
       })
   }
 
-  // CDM - CREATE CONNECTION & ICE CANDIDATES, & CONNECT VIDEO STREAMS
+  // CDM - CREATE CONNECTION & ICE CANDIDATES, & DISPLAY VIDEO STREAMS
   async createLocalPeerConnectionWithIceCandidates() {
-    const servers = {
-      iceServers: SERVERS
-    };
+
     // CREATE CONNECTION
+    const servers = { iceServers: SERVERS };
     await this.setState({ pc: new RTCPeerConnection(servers) });
 
     // GENERATE ICE CANDIDATES
+    // event listener that is triggered as the RTC object receives it's ice
+    // candidates and writes them to state
     this.state.pc.onicecandidate = event => {
       if (event.candidate) {
-        this.setState({ ice: [...this.state.ice, event.candidate] });
-        console.log('Onicecandidate fired')
+        this.setState({ ice: [...this.state.ice,  event.candidate] });
+        console.log('Onicecandidate fired, event=', event.candidate)
         if ( this.state.ice.length > 7 ) {
+          console.log('writing to FB | state.ice=', this.state.ice)
           this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
         }
       } else {
@@ -202,11 +199,6 @@ class Streamer extends Component {
         <video id="myVideo" autoPlay muted />
         <video id="friendsVideo" autoPlay />
         <br />
-
-        <button onClick={this.initialize}
-        type="button" className="btn btn-primary btn-lg">
-          Initialize
-        </button>
 
         <button onClick={this.streamerCreateLocalOfferAddToPeerConnection}
         type="button" className="btn btn-primary btn-lg">

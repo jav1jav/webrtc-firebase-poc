@@ -3,16 +3,14 @@ import React from 'react';
 import { withRouter, Route, Switch } from 'react-router-dom';
 import Viewer from './viewer';
 import Streamer from './streamer';
-import PeerViewer from './peerViewer';
-import PeerStreamer from './peerStreamer';
+import Initializer from './Initializer';
 
 const Routes = () => (
   //Switch only necessary to handle if routes should match exactly or
   <Switch>
     <Route exact path="/viewer" component={Viewer} />
     <Route exact path="/streamer" component={Streamer} />
-    <Route exact path="/peerviewer" component={PeerViewer} />
-    <Route exact path="/peerstreamer" component={PeerStreamer} />
+    <Route exact path="/Initializer" component={Initializer} />
   </Switch>
 );
 
