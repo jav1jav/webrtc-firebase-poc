@@ -6,7 +6,7 @@ const HomePage = () => (
   <div>
     <h3>Testing WebRTC Connections</h3>
     <header className="HomePage-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        <Link to="/"><img src={logo} className="App-logo" alt="logo" /></Link>
       </header>
     <nav>
       <Link to="/streamer">Streamer</Link> <br></br>
