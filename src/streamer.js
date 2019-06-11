@@ -15,6 +15,14 @@ const SERVERS = [
   }
 ]
 
+let time = ( function () {
+  let start = Math.floor(Date.now() / 1000)
+  return function() {
+    return Math.floor(Date.now() / 1000) - start
+  }
+})()
+
+let streamerIceCounter = 0
 
 class Streamer extends Component {
   constructor() {
@@ -29,10 +37,17 @@ class Streamer extends Component {
     this.writeToFirebase = this.writeToFirebase.bind(this)
     this.readFromFirebase = this.readFromFirebase.bind(this)
     this.initialize = this.initialize.bind(this)
+    this.iceWriter = this.iceWriter.bind(this)
     this.linkToViewerSnapshot = this.linkToViewerSnapshot.bind(this)
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this)
     this.streamerCreateLocalOfferAddToPeerConnection = this.streamerCreateLocalOfferAddToPeerConnection.bind(this)
 
+  }
+
+  iceWriter(count, candidate) {
+    let obj = {}
+    obj['ice'+count] = candidate
+    return obj
   }
 
   // * HELPER - WRITE
@@ -54,7 +69,7 @@ class Streamer extends Component {
         return db
           .collection('users')
           .doc(id)
-          .set({ ice: value }, { merge: true });
+          .set(this.iceWriter(++streamerIceCounter, value), { merge: true });
       }
       default: {
         console.log('default value in switch for writeToFirebase');
@@ -65,7 +80,6 @@ class Streamer extends Component {
   // * HELPER - READ
   async readFromFirebase(id, field) {
     const document = await db.collection('users').doc(id).get();
-    console.log('readFromFirebase', document.data())
     switch (field) {
       case ANSWER: {
         return JSON.parse(document.data().answer);
@@ -79,6 +93,9 @@ class Streamer extends Component {
     }
   }
 
+  // * HELPER - TIME
+
+
   // * HELPER - INITIALIZE
   async initialize() {
     await this.writeToFirebase(this.state.viewerId, ANSWER, "")
@@ -91,21 +108,21 @@ class Streamer extends Component {
   // * HELPER - SNAPSHOT
   async linkToViewerSnapshot(id) {
     await db.collection('users')
-      .doc(id).onSnapshot( document => {
+      .doc(id).onSnapshot( async document => {
         let data = document.data()
         if ( data ) {
           // GET VIEWER'S ANSWER
           if ( data.answer ) { //&& this.state.pc.localDescription === 'stable'
+            console.log('write answer from firebase', time())
             data.answer = JSON.parse(data.answer)
             this.state.pc.setRemoteDescription(new RTCSessionDescription(data.answer.sdp))
-            this.setState({ ...this.state, ans: data.answer })
+            await this.writeToFirebase(this.state.viewerId, ANSWER, "")
           }
           // GET VIEWER'S ICE CANDIDATES
           if ( data.ice  ) {
             data.ice = JSON.parse(data.ice)
-            data.ice.forEach(el =>{
-              this.state.pc.addIceCandidate(new RTCIceCandidate(el))
-            })
+            console.log('get viewer ice', data.ice, time())
+            this.state.pc.addIceCandidate(new RTCIceCandidate(data.ice))
           }
         }
       })
@@ -118,19 +135,19 @@ class Streamer extends Component {
     const servers = { iceServers: SERVERS };
     await this.setState({ pc: new RTCPeerConnection(servers) });
 
-    // GENERATE ICE CANDIDATES
+    // EVENT TO GENERATE ICE CANDIDATES
     // event listener that is triggered as the RTC object receives it's ice
     // candidates and writes them to state
     this.state.pc.onicecandidate = event => {
       if (event.candidate) {
         this.setState({ ice: [...this.state.ice,  event.candidate] });
-        console.log('Onicecandidate fired')
-        if ( this.state.ice.length > 7 ) {
-          this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
-        }
+        console.log('Onicecandidate fired, written to firebase', time())
+        // if ( this.state.ice.length > 7 ) {
+          this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(event.candidate));
+        // }
       } else {
-        this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
-        console.log('All ice candidates have been received');
+        // this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
+        console.log('All ice candidates have been received', time());
       }
     };
 
@@ -139,7 +156,10 @@ class Streamer extends Component {
     const friendsVideo = document.getElementById('friendsVideo');
 
     // SET LISTENER TO ADD VIEWER'S STREAM
-    this.state.pc.onaddstream = event => friendsVideo.srcObject = event.stream
+    this.state.pc.onaddstream = event => {
+      console.log('viewers stream added to streamer page',  time())
+      friendsVideo.srcObject = event.stream
+    }
 
     // ADD STREAM TO VIEW ELEMENT AND ALSO THE WRTC_STREAM
     navigator.mediaDevices
@@ -147,7 +167,7 @@ class Streamer extends Component {
       .then(stream => (myVideo.srcObject = stream))
       .then(stream => this.state.pc.addStream(stream));
 
-    console.log('Connection created, ice candidates being generated | this.state', this.state)
+    console.log('Connection created, ice candidates listener set', time())
   }
 
   async streamerCreateLocalOfferAddToPeerConnection() {
@@ -161,7 +181,7 @@ class Streamer extends Component {
     this.writeToFirebase( this.state.streamerId, OFFER,
       JSON.stringify({ sdp: this.state.pc.localDescription })
     );
-    console.log('Offer generated and written to firebase | this.state', this.state)
+    console.log('Offer generated and written to firebase | this.state', time())
   }
 
   // ######## CDM #########
