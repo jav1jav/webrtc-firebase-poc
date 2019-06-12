@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import db from './firebase';
-import { time, writeToFirebase } from './utilities'
+import db, { writeToFirebase } from './firebase';
+import { time } from './utilities'
 
 const ICE = 'ice';
 const OFFER = 'offer';
@@ -16,15 +16,6 @@ const SERVERS = [
   }
 ]
 
-// let time = ( function () {
-//   let start = Math.floor(Date.now() / 1000)
-//   return function() {
-//     return Math.floor(Date.now() / 1000) - start
-//   }
-// })()
-
-// let streamerIceCounter = 0
-
 class Streamer extends Component {
   constructor() {
     super();
@@ -35,75 +26,10 @@ class Streamer extends Component {
       ice: [],
       ans: {},
     };
-    // this.writeToFirebase = this.writeToFirebase.bind(this)
-    // this.readFromFirebase = this.readFromFirebase.bind(this)
-    this.initialize = this.initialize.bind(this)
-    // this.iceWriter = this.iceWriter.bind(this)
     this.linkToViewerSnapshot = this.linkToViewerSnapshot.bind(this)
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this)
     this.streamerCreateLocalOfferAddToPeerConnection = this.streamerCreateLocalOfferAddToPeerConnection.bind(this)
 
-  }
-
-  // iceWriter(count, candidate) {
-  //   let obj = {}
-  //   obj['ice'+count] = candidate
-  //   return obj
-  // }
-
-  // // * HELPER - WRITE
-  // writeToFirebase(id, field, value) {
-  //   switch (field) {
-  //     case OFFER: {
-  //       return db
-  //         .collection('users')
-  //         .doc(id)
-  //         .set({ offer: value });
-  //     }
-  //     case ANSWER: {
-  //       return db
-  //         .collection('users')
-  //         .doc(id)
-  //         .set({ answer: value }, {merge: true});
-  //     }
-  //     case ICE: {
-  //       return db
-  //         .collection('users')
-  //         .doc(id)
-  //         .set(this.iceWriter(++streamerIceCounter, value), { merge: true });
-  //     }
-  //     default: {
-  //       console.log('default value in switch for writeToFirebase');
-  //     }
-  //   }
-  // }
-
-  // // * HELPER - READ
-  // async readFromFirebase(id, field) {
-  //   const document = await db.collection('users').doc(id).get();
-  //   switch (field) {
-  //     case ANSWER: {
-  //       return JSON.parse(document.data().answer);
-  //     }
-  //     case ICE: {
-  //       return JSON.parse(document.data().ice);
-  //     }
-  //     default: {
-  //       console.log('default switch for writeToFirebase');
-  //     }
-  //   }
-  // }
-
-  // // * HELPER - TIME
-
-
-  // * HELPER - INITIALIZE
-  async initialize() {
-    await writeToFirebase(this.state.viewerId, ANSWER, "")
-    await writeToFirebase(this.state.viewerId, ICE, "")
-    await writeToFirebase(this.state.streamerId, OFFER, "")
-    await writeToFirebase(this.state.streamerId, ICE, "")
-    console.log('initialize')
   }
 
   // * HELPER - SNAPSHOT
