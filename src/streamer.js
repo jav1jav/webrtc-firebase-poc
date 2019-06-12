@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import db from './firebase';
+import { time, writeToFirebase } from './utilities'
 
 const ICE = 'ice';
 const OFFER = 'offer';
@@ -15,14 +16,14 @@ const SERVERS = [
   }
 ]
 
-let time = ( function () {
-  let start = Math.floor(Date.now() / 1000)
-  return function() {
-    return Math.floor(Date.now() / 1000) - start
-  }
-})()
+// let time = ( function () {
+//   let start = Math.floor(Date.now() / 1000)
+//   return function() {
+//     return Math.floor(Date.now() / 1000) - start
+//   }
+// })()
 
-let streamerIceCounter = 0
+// let streamerIceCounter = 0
 
 class Streamer extends Component {
   constructor() {
@@ -34,74 +35,74 @@ class Streamer extends Component {
       ice: [],
       ans: {},
     };
-    this.writeToFirebase = this.writeToFirebase.bind(this)
-    this.readFromFirebase = this.readFromFirebase.bind(this)
+    // this.writeToFirebase = this.writeToFirebase.bind(this)
+    // this.readFromFirebase = this.readFromFirebase.bind(this)
     this.initialize = this.initialize.bind(this)
-    this.iceWriter = this.iceWriter.bind(this)
+    // this.iceWriter = this.iceWriter.bind(this)
     this.linkToViewerSnapshot = this.linkToViewerSnapshot.bind(this)
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this)
     this.streamerCreateLocalOfferAddToPeerConnection = this.streamerCreateLocalOfferAddToPeerConnection.bind(this)
 
   }
 
-  iceWriter(count, candidate) {
-    let obj = {}
-    obj['ice'+count] = candidate
-    return obj
-  }
+  // iceWriter(count, candidate) {
+  //   let obj = {}
+  //   obj['ice'+count] = candidate
+  //   return obj
+  // }
 
-  // * HELPER - WRITE
-  writeToFirebase(id, field, value) {
-    switch (field) {
-      case OFFER: {
-        return db
-          .collection('users')
-          .doc(id)
-          .set({ offer: value });
-      }
-      case ANSWER: {
-        return db
-          .collection('users')
-          .doc(id)
-          .set({ answer: value }, {merge: true});
-      }
-      case ICE: {
-        return db
-          .collection('users')
-          .doc(id)
-          .set(this.iceWriter(++streamerIceCounter, value), { merge: true });
-      }
-      default: {
-        console.log('default value in switch for writeToFirebase');
-      }
-    }
-  }
+  // // * HELPER - WRITE
+  // writeToFirebase(id, field, value) {
+  //   switch (field) {
+  //     case OFFER: {
+  //       return db
+  //         .collection('users')
+  //         .doc(id)
+  //         .set({ offer: value });
+  //     }
+  //     case ANSWER: {
+  //       return db
+  //         .collection('users')
+  //         .doc(id)
+  //         .set({ answer: value }, {merge: true});
+  //     }
+  //     case ICE: {
+  //       return db
+  //         .collection('users')
+  //         .doc(id)
+  //         .set(this.iceWriter(++streamerIceCounter, value), { merge: true });
+  //     }
+  //     default: {
+  //       console.log('default value in switch for writeToFirebase');
+  //     }
+  //   }
+  // }
 
-  // * HELPER - READ
-  async readFromFirebase(id, field) {
-    const document = await db.collection('users').doc(id).get();
-    switch (field) {
-      case ANSWER: {
-        return JSON.parse(document.data().answer);
-      }
-      case ICE: {
-        return JSON.parse(document.data().ice);
-      }
-      default: {
-        console.log('default switch for writeToFirebase');
-      }
-    }
-  }
+  // // * HELPER - READ
+  // async readFromFirebase(id, field) {
+  //   const document = await db.collection('users').doc(id).get();
+  //   switch (field) {
+  //     case ANSWER: {
+  //       return JSON.parse(document.data().answer);
+  //     }
+  //     case ICE: {
+  //       return JSON.parse(document.data().ice);
+  //     }
+  //     default: {
+  //       console.log('default switch for writeToFirebase');
+  //     }
+  //   }
+  // }
 
-  // * HELPER - TIME
+  // // * HELPER - TIME
 
 
   // * HELPER - INITIALIZE
   async initialize() {
-    await this.writeToFirebase(this.state.viewerId, ANSWER, "")
-    await this.writeToFirebase(this.state.viewerId, ICE, "")
-    await this.writeToFirebase(this.state.streamerId, OFFER, "")
-    await this.writeToFirebase(this.state.streamerId, ICE, "")
+    await writeToFirebase(this.state.viewerId, ANSWER, "")
+    await writeToFirebase(this.state.viewerId, ICE, "")
+    await writeToFirebase(this.state.streamerId, OFFER, "")
+    await writeToFirebase(this.state.streamerId, ICE, "")
     console.log('initialize')
   }
 
@@ -116,7 +117,7 @@ class Streamer extends Component {
             console.log('write answer from firebase', time())
             data.answer = JSON.parse(data.answer)
             this.state.pc.setRemoteDescription(new RTCSessionDescription(data.answer.sdp))
-            await this.writeToFirebase(this.state.viewerId, ANSWER, "")
+            await writeToFirebase(this.state.viewerId, ANSWER, "")
           }
           // GET VIEWER'S ICE CANDIDATES
           if ( data.ice  ) {
@@ -143,7 +144,7 @@ class Streamer extends Component {
         this.setState({ ice: [...this.state.ice,  event.candidate] });
         console.log('Onicecandidate fired, written to firebase', time())
         // if ( this.state.ice.length > 7 ) {
-          this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(event.candidate));
+          writeToFirebase(this.state.streamerId, ICE, JSON.stringify(event.candidate));
         // }
       } else {
         // this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
@@ -178,7 +179,7 @@ class Streamer extends Component {
     await this.state.pc.setLocalDescription(offer)
 
     // 7. Send that Offer to your friend’s computer
-    this.writeToFirebase( this.state.streamerId, OFFER,
+    writeToFirebase( this.state.streamerId, OFFER,
       JSON.stringify({ sdp: this.state.pc.localDescription })
     );
     console.log('Offer generated and written to firebase | this.state', time())
