@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import db from './firebase';
-import { ICE, OFFER, ONLINE, ANSWER, SERVERS } from './constants'
+import { ICE, OFFER, ONLINE, ANSWER, STUN_SERVERS } from './constants'
 import {
   areThereIceCandidates,
   isPropertyAnIceCandidate,
@@ -61,7 +61,7 @@ class Streamer extends Component {
   async createLocalPeerConnectionWithIceCandidates() {
 
     // CREATE CONNECTION
-    const servers = { iceServers: SERVERS };
+    const servers = { iceServers: STUN_SERVERS };
     await this.setState({ pc: new RTCPeerConnection(servers) });
 
     // EVENT TO GENERATE ICE CANDIDATES
