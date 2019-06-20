@@ -26,6 +26,10 @@ export const writeToFirebase = (id, field, value) => {
   let obj = {}
 
   switch (field) {
+    case 'online': {
+      obj[field] = value
+      return document.set(obj)
+    }
     case 'offer': {
       obj[field] = value
       return document.set(obj)
@@ -66,6 +70,7 @@ export const deleteFromFirebase = async (id, field) => {
 export const initialize = async () => {
   await deleteFromFirebase('viewer', 'answer')
   await deleteFromFirebase('streamer', 'offer')
+  await deleteFromFirebase('viewer', 'online')
   for(let i = 0; i < 10; i++) {
     await deleteFromFirebase('viewer', 'ice' + i)
     await deleteFromFirebase('streamer', 'ice' + i)

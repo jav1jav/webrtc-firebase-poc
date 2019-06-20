@@ -1,26 +1,12 @@
 import React, { Component } from 'react';
 import db from './firebase';
+import { ICE, OFFER, ONLINE, ANSWER, SERVERS } from './constants'
 import {
-  time,
   areThereIceCandidates,
   isPropertyAnIceCandidate,
   writeToFirebase,
   deleteFromFirebase
 } from './utilities'
-
-const ICE = 'ice';
-const OFFER = 'offer';
-const ANSWER = 'answer';
-const SERVERS = [
-  //THESE ARE SERVERS THE CONNECTION WILL USE TO CREATE THE ICE SERVERS
-  { urls: 'stun:stun.services.mozilla.com' },
-  { urls: 'stun:stun.l.google.com:19302' },
-  {
-    urls: 'turn:numb.viagenie.ca',
-    credential: 'webrtc',
-    username: 'javier3@gmail.com'
-  }
-]
 
 class Streamer extends Component {
   constructor() {
@@ -34,37 +20,36 @@ class Streamer extends Component {
     };
     this.linkToViewerSnapshot = this.linkToViewerSnapshot.bind(this)
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this)
-    this.streamerCreateLocalOfferAddToPeerConnection = this.streamerCreateLocalOfferAddToPeerConnection.bind(this)
-
   }
 
-  // * HELPER - SNAPSHOT
+  // * LINK TO FIREBASE SNAPSHOT
   async linkToViewerSnapshot(id) {
     await db.collection('users')
       .doc(id).onSnapshot( async document => {
         let data = document.data()
         if ( data ) {
-          // GET VIEWER'S ANSWER
+          if ( data.online ) {
+            // CREATE OFFER, SET LOCALLY AND SEND TO VIEWER
+            const offer = await this.state.pc.createOffer()
+            await this.state.pc.setLocalDescription(offer)
+            await writeToFirebase( this.state.streamerId, OFFER,
+              JSON.stringify({ sdp: this.state.pc.localDescription })
+            );
+            await deleteFromFirebase(this.state.viewerId, ONLINE )
+          }
+          // GET AND ADD VIEWER'S ANSWER
           if ( data.answer ) { //&& this.state.pc.localDescription === 'stable'
-            console.log('get answer from firebase', time())
             data.answer = JSON.parse(data.answer)
             this.state.pc.setRemoteDescription(new RTCSessionDescription(data.answer.sdp))
             await deleteFromFirebase(this.state.viewerId, ANSWER)
           }
-          // GET VIEWER'S ICE CANDIDATES
-          // if ( data.ice  ) {
-          //   data.ice = JSON.parse(data.ice)
-          //   console.log('get viewer ice', data.ice, time())
-          //   this.state.pc.addIceCandidate(new RTCIceCandidate(data.ice))
-
-          // }
+          // PROCESS ICE CANDIDATES
           if ( areThereIceCandidates(data) ) {
             for(let prop in data) {
               if ( isPropertyAnIceCandidate(prop) ) {
                 let candidate = JSON.parse(data[prop])
-                console.log('get streamer ice | key name:', prop, 'candidate:', candidate, time())
                 this.state.pc.addIceCandidate(new RTCIceCandidate(candidate))
-               await deleteFromFirebase(this.state.viewerId, prop)
+                await deleteFromFirebase(this.state.viewerId, prop)
               }
             }
           }
@@ -72,7 +57,7 @@ class Streamer extends Component {
       })
   }
 
-  // CDM - CREATE CONNECTION & ICE CANDIDATES, & DISPLAY VIDEO STREAMS
+  // CREATE CONNECTION & ICE CANDIDATES, & DISPLAY VIDEO STREAMS
   async createLocalPeerConnectionWithIceCandidates() {
 
     // CREATE CONNECTION
@@ -85,13 +70,10 @@ class Streamer extends Component {
     this.state.pc.onicecandidate = event => {
       if (event.candidate) {
         this.setState({ ice: [...this.state.ice,  event.candidate] });
-        console.log('Onicecandidate fired, written to firebase', time())
-        // if ( this.state.ice.length > 7 ) {
-          writeToFirebase(this.state.streamerId, ICE, JSON.stringify(event.candidate));
-        // }
+        writeToFirebase(this.state.streamerId, ICE,
+          JSON.stringify(event.candidate));
       } else {
-        // this.writeToFirebase(this.state.streamerId, ICE, JSON.stringify(this.state.ice));
-        console.log('All ice candidates have been received', time());
+        // console.log('All ice candidates have been received', time());
       }
     };
 
@@ -101,7 +83,6 @@ class Streamer extends Component {
 
     // SET LISTENER TO ADD VIEWER'S STREAM
     this.state.pc.onaddstream = event => {
-      console.log('viewers stream added to streamer page',  time())
       friendsVideo.srcObject = event.stream
     }
 
@@ -111,24 +92,8 @@ class Streamer extends Component {
       .then(stream => (myVideo.srcObject = stream))
       .then(stream => this.state.pc.addStream(stream));
 
-    console.log('Connection created, ice candidates listener set', time())
   }
 
-  async streamerCreateLocalOfferAddToPeerConnection() {
-    // 5. Create an Offer on your computer
-    const offer = await this.state.pc.createOffer()
-
-    // 6. Add that Offer to the PeerConnection on your computer
-    await this.state.pc.setLocalDescription(offer)
-
-    // 7. Send that Offer to your friend’s computer
-    writeToFirebase( this.state.streamerId, OFFER,
-      JSON.stringify({ sdp: this.state.pc.localDescription })
-    );
-    console.log('Offer generated and written to firebase | this.state', time())
-  }
-
-  // ######## CDM #########
   // ######## CDM #########
   componentDidMount() {
     this.createLocalPeerConnectionWithIceCandidates()
@@ -138,20 +103,12 @@ class Streamer extends Component {
   }
 
   // ######## RENDER #######
-  // ######## RENDER #######
   render() {
-
     return (
       <div>
         <video id="myVideo" autoPlay muted />
         <video id="friendsVideo" autoPlay />
         <br />
-
-        <button onClick={this.streamerCreateLocalOfferAddToPeerConnection}
-        type="button" className="btn btn-primary btn-lg">
-          <span className="glyphicon glyphicon-facetime-video" aria-hidden="true"/>{' '} CreateOfferAndWrite
-        </button>
-
       </div>
     );
   }
