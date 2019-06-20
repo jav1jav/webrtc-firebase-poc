@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import db, { writeToFirebase } from './firebase';
-import { time } from './utilities'
+import db, { writeToFirebase, deleteFromFirebase } from './firebase';
+import { time, areThereIceCandidates, isPropertyAnIceCandidate } from './utilities'
 
 const ICE = 'ice';
 const OFFER = 'offer';
@@ -40,16 +40,27 @@ class Streamer extends Component {
         if ( data ) {
           // GET VIEWER'S ANSWER
           if ( data.answer ) { //&& this.state.pc.localDescription === 'stable'
-            console.log('write answer from firebase', time())
+            console.log('get answer from firebase', time())
             data.answer = JSON.parse(data.answer)
             this.state.pc.setRemoteDescription(new RTCSessionDescription(data.answer.sdp))
-            await writeToFirebase(this.state.viewerId, ANSWER, "")
+            await deleteFromFirebase(this.state.viewerId, ANSWER)
           }
           // GET VIEWER'S ICE CANDIDATES
-          if ( data.ice  ) {
-            data.ice = JSON.parse(data.ice)
-            console.log('get viewer ice', data.ice, time())
-            this.state.pc.addIceCandidate(new RTCIceCandidate(data.ice))
+          // if ( data.ice  ) {
+          //   data.ice = JSON.parse(data.ice)
+          //   console.log('get viewer ice', data.ice, time())
+          //   this.state.pc.addIceCandidate(new RTCIceCandidate(data.ice))
+
+          // }
+          if ( areThereIceCandidates(data) ) {
+            for(let prop in data) {
+              if ( isPropertyAnIceCandidate(prop) ) {
+                let candidate = JSON.parse(data[prop])
+                console.log('get streamer ice | key name:', prop, 'candidate:', candidate, time())
+                this.state.pc.addIceCandidate(new RTCIceCandidate(candidate))
+               await deleteFromFirebase(this.state.viewerId, prop)
+              }
+            }
           }
         }
       })

@@ -23,19 +23,40 @@ db.settings(settings);
 // * HELPER - WRITE
 let streamerIceCounter = 0
 export const writeToFirebase = (id, field, value) => {
+  // 'id' will identify the viewer or the streamer
+  let document = db.collection('users').doc(id)
   let obj = {}
-  if ( !(field === 'offer') ) { //if value changed is ice or answer, merge is true
-    obj['merge'] = true
+
+  switch (field) {
+    case 'offer': {
+      obj[field] = value
+      return document.set(obj)
+    }
+    case 'answer': {
+      obj[field] = value
+      return document.set(obj, {'merge': true})
+    }
+    case 'ice': {
+      obj[field + ++streamerIceCounter] = value
+      return document.set(obj, {'merge': true})
+    }
+    default: {
+      console.log('default switch for writeToFirebase');
+    }
   }
-  if ( field === 'ice' ) { //if value changed is ice, then increment the prop key
-    obj[field + ++streamerIceCounter] = value
-  } else {
-    obj[field] = value
-  }
-  return db
-    .collection('users')
-    .doc(id)
-    .set(obj)
+  // if( !(field === 'offer') ) { //if value changed is ice or answer, merge is true
+  //   obj['merge'] = true
+  // }
+  // if ( field === 'ice' ) { //if value changed is ice, then increment the prop key
+  //   obj[field + ++streamerIceCounter] = value
+  // } else {
+  //   obj[field] = value
+  // }
+
+  // return db
+  //   .collection('users')
+  //   .doc(id)
+  //   .set(obj)
 }
 
 // * HELPER - READ
@@ -60,6 +81,7 @@ export const readFromFirebase = async (id, field) => {
 export const deleteFromFirebase = async (id, field) => {
   let obj = {}
   obj[field] = firebase.firestore.FieldValue.delete()
+
   const document = await db.collection('users').doc(id)
   document.update(obj)
 }
