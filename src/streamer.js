@@ -1,6 +1,12 @@
 import React, { Component } from 'react';
-import db, { writeToFirebase, deleteFromFirebase } from './firebase';
-import { time, areThereIceCandidates, isPropertyAnIceCandidate } from './utilities'
+import db from './firebase';
+import {
+  time,
+  areThereIceCandidates,
+  isPropertyAnIceCandidate,
+  writeToFirebase,
+  deleteFromFirebase
+} from './utilities'
 
 const ICE = 'ice';
 const OFFER = 'offer';
