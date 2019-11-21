@@ -71,7 +71,7 @@ export const initialize = async () => {
   await deleteFromFirebase('viewer', 'answer')
   await deleteFromFirebase('streamer', 'offer')
   await deleteFromFirebase('viewer', 'online')
-  for(let i = 0; i < 10; i++) {
+  for(let i = 0; i < 200; i++) {
     await deleteFromFirebase('viewer', 'ice' + i)
     await deleteFromFirebase('streamer', 'ice' + i)
   }
