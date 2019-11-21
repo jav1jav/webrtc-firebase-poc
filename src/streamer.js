@@ -75,28 +75,39 @@ class Streamer extends Component {
       } else {
         // console.log('All ice candidates have been received', time());
       }
-    };
+    }
+  }
 
+  async connectVideoStreamsToPageElements() {
     // CONNECT VIDEO STREAMS TO PAGE ELEMENTS
     const myVideo = document.getElementById('myVideo');
     const friendsVideo = document.getElementById('friendsVideo');
 
     // SET LISTENER TO ADD VIEWER'S STREAM
-    this.state.pc.onaddstream = event => {
-      friendsVideo.srcObject = event.stream
+    let inboundStream = null
+    this.state.pc.ontrack = event => {
+      if (event.streams && event.streams[0]) {
+        friendsVideo.srcObject = event.streams[0]
+      } else {
+        if (!inboundStream) {
+          inboundStream = new MediaStream()
+          friendsVideo.srcObject = inboundStream
+        }
+        inboundStream.addTrack(event.track)
+      }
     }
-
     // ADD STREAM TO VIEW ELEMENT AND ALSO THE WRTC_STREAM
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then(stream => (myVideo.srcObject = stream))
-      .then(stream => this.state.pc.addStream(stream));
-
+    const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+    // console.log(mediaStream)
+    myVideo.srcObject = mediaStream
+    mediaStream.getTracks().forEach(track => this.state.pc.addTrack(track, mediaStream))
   }
 
+
   // ######## CDM #########
-  componentDidMount() {
-    this.createLocalPeerConnectionWithIceCandidates()
+  async componentDidMount() {
+    await this.createLocalPeerConnectionWithIceCandidates()
+    this.connectVideoStreamsToPageElements()
     if (this.state.viewerId) {
       this.linkToViewerSnapshot(this.state.viewerId)
     }

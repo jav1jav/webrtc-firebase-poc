@@ -18,6 +18,7 @@ class Viewer extends Component {
       ice: {}
     };
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this) // 4
+    // this.connectVideoStreamsToPageElements = this.connectVideoStreamsToPageElements.bind(this)
   }
 
 
@@ -72,27 +73,39 @@ class Viewer extends Component {
       } else {
         // console.log('All ice candidates have been received', time());
       }
-    };
+    }
+  }
 
+  async connectVideoStreamsToPageElements() {
     // CONNECT VIDEO STREAMS TO PAGE ELEMENTS
     const myVideo = document.getElementById('myVideo');
     const friendsVideo = document.getElementById('friendsVideo');
 
     // SET LISTENER TO ADD VIEWER'S STREAM
-    this.state.pc.onaddstream = event => {
-      friendsVideo.srcObject = event.stream
-    };
-
+    let inboundStream = null
+    this.state.pc.ontrack = event => {
+      if (event.streams && event.streams[0]) {
+        friendsVideo.srcObject = event.streams[0]
+      } else {
+        if (!inboundStream) {
+          inboundStream = new MediaStream()
+          friendsVideo.srcObject = inboundStream
+        }
+        inboundStream.addTrack(event.track)
+      }
+    }
     // ADD STREAM TO VIEW ELEMENT AND ALSO THE WRTC_STREAM
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then(stream => (myVideo.srcObject = stream))
-      .then(stream => this.state.pc.addStream(stream));
+    const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+    // console.log(mediaStream)
+    myVideo.srcObject = mediaStream
+    mediaStream.getTracks().forEach(track => this.state.pc.addTrack(track, mediaStream))
   }
+
 
 
   async componentDidMount() {
     await this.createLocalPeerConnectionWithIceCandidates()
+    this.connectVideoStreamsToPageElements()
     await writeToFirebase(this.state.viewerId, ONLINE, true);
     if (this.state.streamerId) {
       await this.linkToViewerSnapshot(this.state.streamerId)
