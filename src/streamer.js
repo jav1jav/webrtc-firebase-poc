@@ -17,6 +17,7 @@ class Streamer extends Component {
       pc: {},
       ice: [],
       ans: {},
+      tracks: []
     };
     this.linkToViewerSnapshot = this.linkToViewerSnapshot.bind(this)
     this.createLocalPeerConnectionWithIceCandidates = this.createLocalPeerConnectionWithIceCandidates.bind(this)
@@ -100,9 +101,17 @@ class Streamer extends Component {
     const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
     // console.log(mediaStream)
     myVideo.srcObject = mediaStream
-    mediaStream.getTracks().forEach(track => this.state.pc.addTrack(track, mediaStream))
+    mediaStream.getTracks().forEach(track => {
+      let foo = this.state.pc.addTrack(track, mediaStream)
+      this.setState({tracks: [...this.state.tracks, foo]})
+    } )
   }
 
+
+  componentWillUnmount () {
+    this.state.tracks.forEach(track => this.state.pc.removeTrack(track))
+    this.state.pc.close()
+  }
 
   // ######## CDM #########
   async componentDidMount() {
