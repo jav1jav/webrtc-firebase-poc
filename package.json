@@ -1,6 +1,9 @@
 {
   "name": "jamspacefirebase",
   "version": "0.1.0",
+  "engines": {
+    "node": "13.1.0"
+  },
   "private": true,
   "scripts": {
     "start": "node scripts/start.js",
